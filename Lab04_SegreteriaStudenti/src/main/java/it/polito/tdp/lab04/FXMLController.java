@@ -1,6 +1,7 @@
 package it.polito.tdp.lab04;
 
 import java.net.URL;
+import java.sql.SQLException;
 import java.util.ResourceBundle;
 
 import it.polito.tdp.lab04.model.Corso;
@@ -62,23 +63,20 @@ public class FXMLController {
     	int matricola;
     	try {
     		matricola = Integer.parseInt(input);
-    	} catch (NumberFormatException e) {
-    		txtRisposta.appendText("Inserire una matricola valida.");
-    		txtMatricola.clear();
-    		return;
-    	}
-    	Studente stud = new Studente(matricola, null, null, null);
-    	if(model.getStudente(stud).getNome().equals(null) && 
-    			model.getStudente(stud).getCognome().equals(null)) {
-    		txtRisposta.appendText("Non esiste studente con matricola "+stud.getMatricola());
-    		return;
-    	} else {
+    		Studente stud = new Studente(matricola, null, null, null);
     		String str = "";
     		for (Corso c : model.getCorsiStudente(stud)) {
     			str += c.toLongerString()+"\n";
     		}
     		txtRisposta.appendText(str);
     		return;
+    		
+    	} catch (NumberFormatException e) {
+    		txtRisposta.appendText("Inserire una matricola valida.\n");
+    		txtMatricola.clear();
+    		return;
+    	} catch (RuntimeException re) {
+    		txtRisposta.appendText(re.getMessage()+"\n");
     	}
     }
     
@@ -86,16 +84,16 @@ public class FXMLController {
     @FXML
     void CercaIscrittiCorso(ActionEvent event) {
     	txtRisposta.clear();
-    	// ricerca di studenti iscritti a un corso
-    	Corso desiderato = comboCorso.getValue();
-    	if(desiderato == null) {
-    		txtRisposta.appendText("Selezionare un corso. \n");
+    	try{
+    		Corso desiderato = comboCorso.getValue();
+    		String str = "";
+        	for(Studente s : model.getStudentiIscrittiAlCorso(desiderato)) {
+    			str += s.toString()+"\n";
+    		}
+        	txtRisposta.appendText(str);
+    	} catch (NullPointerException e) {
+    		txtRisposta.appendText(e.getMessage()+"\n");
     	}
-    	String str = "";
-    	for(Studente s : model.getStudentiIscrittiAlCorso(desiderato)) {
-			str += s.toString()+"\n";
-		}
-    	txtRisposta.appendText(str);
     }
 
     @FXML
@@ -103,26 +101,29 @@ public class FXMLController {
     	String input = txtMatricola.getText();
     	int matricola;
     	try {
+    		
     		matricola = Integer.parseInt(input);
-    	} catch (NumberFormatException e) {
-    		txtRisposta.appendText("Inserire una matricola valida.");
-    		txtMatricola.clear();
-    		return;
-    	}
-    	
-    	Studente stud = new Studente(matricola, null, null, null);
-    	if(model.getStudente(stud).getNome().equals(null) && 
-    			model.getStudente(stud).getCognome().equals(null)) {
-    		txtRisposta.appendText("Non esiste studente con matricola "+stud.getMatricola());
-    		return;
-    	} else {
+    		Studente stud = new Studente(matricola, null, null, null);
+    		model.getStudente(stud);
     		btnCompletamento.setIndeterminate(false);
     		txtNome.setDisable(false);
     		txtNome.appendText(stud.getNome());
     		txtCognome.setDisable(false);
     		txtCognome.appendText(stud.getCognome());
     		return;
+    		
+    	} catch (NumberFormatException e) {
+    		txtRisposta.appendText("Inserire una matricola valida.\n");
+    		txtMatricola.clear();
+    		btnCompletamento.setIndeterminate(true);
+    		return;
+    		
+    	} catch (NullPointerException ne) {
+    		txtRisposta.appendText(ne.getMessage()+"\n");
+    		btnCompletamento.setIndeterminate(true);
+    		return;
     	}
+    	
     }
 
     @FXML
@@ -132,23 +133,26 @@ public class FXMLController {
     	int matricola;
     	try {
     		matricola = Integer.parseInt(input);
+    		Studente stud = new Studente(matricola, null, null, null);
+        	Corso desiderato = comboCorso.getValue();
+        	
+        	if(desiderato == null) 
+        		throw new NullPointerException ("Non è stato selezionato un corso.\n");
+        	
+        	boolean iscrizione = model.inscriviStudenteACorso(stud, desiderato); 
+        	if(iscrizione == true) {
+        		txtRisposta.appendText("Lo studente "+stud.getMatricola()+" è stato iscritto al corso "+ desiderato.getCodins()+".\n");
+        	} else {
+        		txtRisposta.appendText("Lo studente "+stud.getMatricola()+" è già iscritto al corso"+ desiderato.getCodins()+".\n");
+        	}
+        	
     	} catch (NumberFormatException e) {
     		txtRisposta.appendText("Inserire una matricola valida. \n");
     		txtMatricola.clear();
     		return;
-    	}
-    	Studente stud = new Studente(matricola, null, null, null);
-    	Corso desiderato = comboCorso.getValue();
-    	if(desiderato == null) {
-    		txtRisposta.appendText("Selezionare un corso. \n");
-    		return;
-    	}
-    	boolean iscrizione = model.inscriviStudenteACorso(stud, desiderato);  	
-    	if(iscrizione == true) {
-    		txtRisposta.appendText("Lo studente "+stud.getMatricola()+" è stato iscritto al corso "+ desiderato.getCodins()+".\n");
-    	} else if(iscrizione == false) {
-    		txtRisposta.appendText("Lo studente "+stud.getMatricola()+" è già iscritto al corso"+ desiderato.getCodins()+".\n");
-    	}
+    	} catch(Exception e) {
+    		txtRisposta.appendText(e.getMessage()+"\n");
+    	}  	 
     }
 
     @FXML

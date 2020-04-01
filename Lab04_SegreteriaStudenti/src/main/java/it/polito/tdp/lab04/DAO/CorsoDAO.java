@@ -41,12 +41,15 @@ public class CorsoDAO {
 				Corso c = new Corso(codins, numeroCrediti, nome, periodoDidattico);
 				corsi.add(c);
 			}
+			
+			if(corsi.size() == 0)
+				throw new NullPointerException("Non esiste alcun insegnamento registrato.\n");
 
 			conn.close();
 
 		} catch (SQLException e) {
 			// e.printStackTrace();
-			throw new RuntimeException("Errore Db", e);
+			throw new RuntimeException("Errore nella lettura del Db", e);
 		}
 		Corso vuoto = new Corso(null, 0, null, 0);
 		corsi.add(vuoto);
@@ -73,6 +76,10 @@ public class CorsoDAO {
 				corso.setPd(rs.getInt("pd"));
 			}
 			conn.close();
+			
+			if(corso == null)
+				throw new NullPointerException("Non esiste un corso con quel codice.\n");
+			
 		} catch(SQLException e) {
 			throw new RuntimeException(e);
 		}
@@ -99,6 +106,10 @@ public class CorsoDAO {
 				result.add(s);
 			}
 			conn.close();
+			
+			if(result.size() == 0)
+				throw new NullPointerException("Lo studente esiste ma non frequenta corsi.\n");
+			
 		} catch(SQLException e) {
 			throw new RuntimeException(e);
 		}
